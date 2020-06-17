@@ -4,6 +4,8 @@ Code almost ran without exceptions the first time I tried to run it, except for 
 
 Later realised I neglected to skip visited neighours. Also easily fixed with one statement.
 
+• I use a Set() to track visited nodes. Much faster than using a List(). Apparently 8 degrees of separation (Juliane Banse - Julian Acosta) takes 2 seconds for me, but 3 minutes for someone else! (https://us.edstem.org/courses/176/discussion/43314?answer=191752)
+
 ---
 
 Cases with no connection:
