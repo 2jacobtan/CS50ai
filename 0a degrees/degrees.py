@@ -121,9 +121,12 @@ def shortest_path(source, target):
             neighbors_raw)
         
         for neighbor in neighbors:
+            # skip visited neighbours
+            if neighbor in visited:
+                pass
             if neighbor.state == target:
                 return full_path(neighbor)
-            frontier.add(neighbor)
+                frontier.add(neighbor)
     # when frontier is exhausted without reaching target
     return None
         
