@@ -114,6 +114,8 @@ def shortest_path(source, target):
     visit_node(Node(source,None,None))
 
     while not frontier.empty():
+        print (len(frontier.frontier), len(visited))
+        
         current = frontier.remove() # ::node
 
         neighbors_raw = neighbors_for_person(current.state) # :(movie_id, person_id)
