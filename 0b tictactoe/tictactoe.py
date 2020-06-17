@@ -97,10 +97,16 @@ def terminal(board):
     """
     Returns True if game is over, False otherwise.
     """
+    if winner(board) is not None:
+        return True
+    
+    # if no winner and at least one empty cell available
     for row in board:
         for cell in row:
             if cell is None:
                 return False
+
+    # else game is over
     return True
 
 
