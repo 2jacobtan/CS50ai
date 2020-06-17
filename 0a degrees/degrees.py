@@ -102,11 +102,13 @@ def shortest_path(source, target):
         path_in_reverse = []
         current = destination
         while True:
-            path_in_reverse.append(current)
+            path_in_reverse.append(
+                (current.action,current.state)
+                )
             current = current.parent
             if current.parent == None:
                 break
-        return reversed(path_in_reverse)
+        return list(reversed(path_in_reverse))
 
     #initial state
     visit_node(Node(source,None,None))
