@@ -2,7 +2,6 @@
 Tic Tac Toe Player
 """
 
-import math
 from functools import reduce
 
 X = "X"
@@ -43,7 +42,7 @@ def actions(board):
         for j, cell in enumerate(row):
             if cell is None:
                 possible_actions.add((i, j))
-    
+
     return possible_actions
 
 
@@ -99,7 +98,7 @@ def terminal(board):
     """
     if winner(board) is not None:
         return True
-    
+
     # if no winner and at least one empty cell available
     for row in board:
         for cell in row:
@@ -121,60 +120,55 @@ def utility(board):
         if maybe_winner == symbol:
             return value
 
-# mutual recursion with minimax()
-def action_outcome(board, action): # ::board, action -> int
-    
-    # print("__action_outcome__ board before result()")
-    # for row in board:
-    #     print(row)
-    
-    next_board = result(board,action)
 
-    # print("__action_outcome__ next_board after result()")
-    # for row in next_board:
-    #     print(row)
-    
-    if terminal(next_board):
-        # print("*** action_outcome early return")
-        return utility(next_board)
-    else:
-        next_action = minimax(next_board)
+def minimax_(board, prune):  # with pruning
+    if terminal(board):
+        outcome = utility(board)
+        return (None, outcome)
 
-        # print("*** action_outcome calls action_outcome")
-        return action_outcome(next_board, next_action)
+    player_turn = player(board)
+    isBetterOutcome = isBetterOutcome_factory(player_turn)
+    next_prune = prune_factory(player_turn)
+
+    action_set = actions(board)
+    action_outcome_list = []
+
+    for action in action_set:
+        next_board = result(board, action)
+
+        outcome = minimax_(next_board, next_prune)[1]
+
+        # short-circuit when outcome is better or equal to prune
+        if isBetterOutcome(outcome, prune):
+            return (action,outcome)
+        
+        if isBetterOutcome(outcome,next_prune):
+            next_prune = outcome 
+
+        action_outcome_list.append((action,outcome))
+
+    def reducer(x,y):
+        return (x if isBetterOutcome(x[1],y[1]) else y)
+
+    return reduce(reducer, action_outcome_list)
 
 
-# mutual recursion with action_outcome()
-def minimax(board):  # with pruning
+def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
     player_turn = player(board)
-    preferred_outcome = 1 if player_turn == X else -1
+    
+    prune = 1 if player_turn == X else -1 # opposite of prune_factory
 
-    action_list = list(actions(board))
-    outcome_list = []
+    return minimax_(board, prune)[0]
 
-    for action in action_list:
-        # print("*** minimax calls action_outcome")
-        outcome = action_outcome(board, action)
+def prune_factory(player_turn):
+    # initialise with worst posible outcome for current player
+    return (-1 if player_turn == X else 1)
 
-        # pruning
-        if outcome == preferred_outcome:
-            return action
-
-        outcome_list.append(outcome)
-
-    action_outcome_zip = zip(action_list, outcome_list)
-
-    comparison_function = (
-        (lambda x, y: x if x[1] >= y[1] else y) if player_turn == X else
-        (lambda x, y: x if x[1] <= y[1] else y)
+def isBetterOutcome_factory(player_turn):
+    return (
+        (lambda x, y: x >= y) if player_turn == X else
+        (lambda x, y: x <= y)
     )
-    # try:
-    return reduce(comparison_function, action_outcome_zip)[0]
-    # except Exception as e:
-    #     print(list(zip(action_list, outcome_list)))
-    #     for row in board:
-    #         print(row)
-    #     raise e
