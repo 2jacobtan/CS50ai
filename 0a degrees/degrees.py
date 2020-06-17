@@ -126,7 +126,7 @@ def shortest_path(source, target):
                 pass
             if neighbor.state == target:
                 return full_path(neighbor)
-                frontier.add(neighbor)
+                visit_node(neighbor)
     # when frontier is exhausted without reaching target
     return None
         
