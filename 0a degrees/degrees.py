@@ -91,11 +91,11 @@ def shortest_path(source, target):
 
     If no possible path, returns None.
     """
-    visited = set() # :nodes
+    visited = set() # :{person_id}
     frontier = QueueFrontier() # ::[node]
     
-    def visit_node(new_node):
-        visited.add(new_node)
+    def visit_node(new_node): # ::node -> ()
+        visited.add(new_node.state) #state is a person_id
         frontier.add(new_node)
 
     def full_path(destination): # ::node -> [node]
@@ -115,18 +115,18 @@ def shortest_path(source, target):
 
     while not frontier.empty():
         current = frontier.remove() # ::node
+
         neighbors_raw = neighbors_for_person(current.state) # :(movie_id, person_id)
+        neighbors_raw = filter(lambda raw: raw[1] not in visited, neighbors_raw)
+
         neighbors = map(
             lambda raw: Node(raw[1], current, raw[0]),
             neighbors_raw)
         
         for neighbor in neighbors:
-            # skip visited neighbours
-            if neighbor in visited:
-                pass
             if neighbor.state == target:
                 return full_path(neighbor)
-                visit_node(neighbor)
+            visit_node(neighbor)
     # when frontier is exhausted without reaching target
     return None
         
