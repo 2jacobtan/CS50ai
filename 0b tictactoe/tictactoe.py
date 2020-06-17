@@ -140,15 +140,15 @@ def minimax_(board, prune):  # with pruning
 
         # short-circuit when outcome is better or equal to prune
         if isBetterOutcome(outcome, prune):
-            return (action,outcome)
-        
-        if isBetterOutcome(outcome,next_prune):
-            next_prune = outcome 
+            return (action, outcome)
 
-        action_outcome_list.append((action,outcome))
+        if isBetterOutcome(outcome, next_prune):
+            next_prune = outcome
 
-    def reducer(x,y):
-        return (x if isBetterOutcome(x[1],y[1]) else y)
+        action_outcome_list.append((action, outcome))
+
+    def reducer(x, y):
+        return (x if isBetterOutcome(x[1], y[1]) else y)
 
     return reduce(reducer, action_outcome_list)
 
@@ -158,14 +158,16 @@ def minimax(board):
     Returns the optimal action for the current player on the board.
     """
     player_turn = player(board)
-    
-    prune = 1 if player_turn == X else -1 # opposite of prune_factory
+
+    prune = 1 if player_turn == X else -1  # opposite of prune_factory
 
     return minimax_(board, prune)[0]
+
 
 def prune_factory(player_turn):
     # initialise with worst posible outcome for current player
     return (-1 if player_turn == X else 1)
+
 
 def isBetterOutcome_factory(player_turn):
     return (
