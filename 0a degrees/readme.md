@@ -15,3 +15,7 @@ Searched through around 300k persons, frontier had max size of around 155k perso
 • Emma Watson - Marilyn Monroe
 
 Searched through 377k persons, frontier had max size of around 157k persons. Code ran for 21 minutes.
+
+• {person} - {person}
+
+For my implementation, because the source is set as already visited right from the start, the search algorithm will never visit it again. Hence if source == target, there will be no connection.
