@@ -214,7 +214,7 @@ class MinesweeperAI():
             and 0 <= j and j < self.width
         }
         adjacent_cells -= {cell}
-        
+
         # exclude known mines
         valid_adjacent_cells = adjacent_cells - self.mines
         # deduct (number of known mines excluded) from count!
@@ -225,7 +225,7 @@ class MinesweeperAI():
 
         if len(valid_adjacent_cells) > 0:
             self.knowledge.append(
-                Sentence(valid_adjacent_cells, new_count)) # use new_count!
+                Sentence(valid_adjacent_cells, new_count))  # use new_count!
 
         # "Updating" involves checking each sentence for known mines / safes, and marking them on all sentences.
         def update_knowledge(sentence_list):
@@ -318,10 +318,10 @@ class MinesweeperAI():
                             frozenset(right.cells - left.cells),
                             right.count - left.count
                         )
-                        print(new_sentence_tuple, end = " ")
+                        print(new_sentence_tuple, end=" ")
                         new_sentences.add(new_sentence_tuple)
                     else:
-                        print(j, end = " ")
+                        print(j, end=" ")
                 print("\n")
                 # left.cells == right.cells can be ignored because the result will be empty set with 0 count
 
