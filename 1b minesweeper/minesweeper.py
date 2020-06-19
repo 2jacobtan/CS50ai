@@ -265,7 +265,7 @@ class MinesweeperAI():
 
         # 5 • If, based on any of the sentences in self.knowledge, new sentences can be inferred (using the subset method described in the Background), then those sentences should be added to the knowledge base as well.
 
-            # detect overlapping sentences, for each coordinate pair
+            # detect overlapping sentences, for each coordinate
             overlaps_per_coord = dict()
             for coord in itertools.product(range(self.height), range(self.width)):
                 # print(coord)
@@ -291,7 +291,7 @@ class MinesweeperAI():
                 for j, (left, right) in enumerate(permutations):
                     print(j, end=" ")
                     if left.cells < right.cells:
-                        new_sentence_tuple = ( # needs to be hashable
+                        new_sentence_tuple = (  # needs to be hashable
                             frozenset(right.cells - left.cells),
                             right.count - left.count
                         )
