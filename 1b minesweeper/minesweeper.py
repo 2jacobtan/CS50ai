@@ -185,11 +185,16 @@ class MinesweeperAI():
             5) add any new sentences to the AI's knowledge base
                if they can be inferred from existing knowledge
         """
+
+        #1 • The function should mark the cell as one of the moves made in the game.
         self.moves_made.add(cell)
+        
+        #2 • The function should mark the cell as a safe cell, updating any sentences that contain the cell as well.
         self.safes.add(cell)
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
 
+        #3 • The function should add a new sentence to the AI’s knowledge base, based on the value of cell and count, to indicate that count of the cell’s neighbors are mines. Be sure to only include cells whose state is still undetermined in the sentence.
         x, y = cell
         unclicked_adjacent_cells = (
             {(i, j)
@@ -203,7 +208,62 @@ class MinesweeperAI():
         self.knowledge.append(
             Sentence(unclicked_adjacent_cells, count))
 
+        # Keep looping until knowledge is updated completely.
+        # "Updating" involves checking each sentence for known mines / safes, and marking them on all sentences.
+        while True:
+        #4 • If, based on any of the sentences in self.knowledge, new cells can be marked as safe or as mines, then the function should do so.
+
+            is_changes_made = update_knowledge(self.knowledge)
+
+            # no changes made means loop can stop
+            if is_changes_made is False:
+                break
+
+        #5 • If, based on any of the sentences in self.knowledge, new sentences can be inferred (using the subset method described in the Background), then those sentences should be added to the knowledge base as well.
+            # employing subset method with each sentence pair permutation
+            permutations = itertools.permutations(self.knowledge, 2)
+            new_sentences = []
+            for left, right in permutations:
+                if left.cells < right.cells:
+                    new_sentence = Sentence(
+                        right.cells - left.cells,
+                        right.count - left.count
+                    )
+                    new_sentences.append(new_sentence)
+                # left.cells == right.cells can be ignored because the result will be empty set with 0 count
+
+            self.knowledge += new_sentences
+            # only new sentences need to be updated
+            is_changes_made = update_knowledge(new_sentences)
+
+            # no changes made means loop can stop
+            if is_changes_made is False:
+                break
         
+        def update_knowledge(sentence_list):
+            unmarked_mines = []
+            unmarked_safes = []
+
+            # accumulate unmarked mines and safes
+            for sentence in sentence_list:
+                unmarked_mines += sentence.known_mines()
+                unmarked_safes += sentence.known_safes()
+
+            # return the fact that no changes are needed
+            if len(unmarked_mines) + len(unmarked_safes) == 0:
+                return False #
+
+            # update knowledge
+            self.mines += unmarked_mines
+            self.safes += unmarked_safes
+            for mine in unmarked_mines:
+                mark_mine(mine)
+            for safe in unmarked_safes:
+                mark_safe(safe)
+
+            # return the fact that changes have been made
+            return True
+       
 
     def make_safe_move(self):
         """
