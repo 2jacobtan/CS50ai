@@ -221,8 +221,15 @@ class MinesweeperAI():
 
             # accumulate unmarked mines and safes
             for sentence in sentence_list:
-                unmarked_mines |= sentence.known_mines()
-                unmarked_safes |= sentence.known_safes()
+                known_safes = sentence.known_safes()
+                if len(known_safes) > 0:
+                    unmarked_safes |= known_safes
+                    self.knowledge.remove(sentence)
+                    pass
+                known_mines = sentence.known_mines()
+                if len(known_mines) > 0:
+                    unmarked_mines |= known_mines
+                    self.knowledge.remove(sentence)
 
             # return the fact that no changes are needed
             if len(unmarked_mines) + len(unmarked_safes) == 0:
@@ -240,7 +247,8 @@ class MinesweeperAI():
             return True
 
         # Keep looping until knowledge is updated completely.
-        count = 0; max = 99
+        count = 0
+        max = 99
         while True:
             print("count:", count)
             if count >= max:
@@ -257,9 +265,9 @@ class MinesweeperAI():
 
         # 5 • If, based on any of the sentences in self.knowledge, new sentences can be inferred (using the subset method described in the Background), then those sentences should be added to the knowledge base as well.
 
-            # detect overlapping sentences, for each coordinate
+            # detect overlapping sentences, for each coordinate pair
             overlaps_per_coord = dict()
-            for coord in itertools.product(range(self.height),range(self.width)):
+            for coord in itertools.product(range(self.height), range(self.width)):
                 # print(coord)
                 overlaps = []
                 for sentence in self.knowledge:
@@ -271,23 +279,36 @@ class MinesweeperAI():
 
             # employing subset method with each sentence pair permutation
             permutations_per_coord = dict()
-            for coord,overlaps in overlaps_per_coord.items():
-                permutations_per_coord[coord] = itertools.permutations(overlaps, 2)
+            for coord, overlaps in overlaps_per_coord.items():
+                permutations_per_coord[coord] = itertools.permutations(
+                    overlaps, 2)
 
-            new_sentences = []
+            # stored as hashable tuples instead of Sentence(), to eliminate uniques
+            new_sentences = set()
+
             for coord, permutations in permutations_per_coord.items():
-                print("subset technique for:", coord, end = " ")
+                print("subset technique for:", coord, end=" ")
                 for j, (left, right) in enumerate(permutations):
-                    print(j, end = " ")
+                    print(j, end=" ")
                     if left.cells < right.cells:
-                        new_sentence = Sentence(
-                            right.cells - left.cells,
+                        new_sentence_tuple = ( # needs to be hashable
+                            frozenset(right.cells - left.cells),
                             right.count - left.count
                         )
-                        print(new_sentence)
-                        new_sentences.append(new_sentence)
+                        print(new_sentence_tuple)
+                        new_sentences.add(new_sentence_tuple)
                 print()
                 # left.cells == right.cells can be ignored because the result will be empty set with 0 count
+
+            new_sentences = list(map(
+                lambda tuple: Sentence(tuple[0], tuple[1]),
+                new_sentences
+            ))
+
+            if len(new_sentences) > 0:
+                print("__add subset technique new sentences__")
+            for ns in new_sentences:
+                print(ns)
 
             self.knowledge += new_sentences
             # only new sentences need to be updated here
@@ -302,7 +323,6 @@ class MinesweeperAI():
             # no changes made means loop can stop
             if is_changes_made is False:
                 break
-            
 
     def make_safe_move(self):
         """
