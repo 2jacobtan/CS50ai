@@ -209,7 +209,7 @@ class MinesweeperAI():
         }
         adjacent_cells -= {cell}  # just to be safe
         # exclude clicked cells
-        unclicked_adjacent_cells = adjacent_cells - self.moves_made  
+        unclicked_adjacent_cells = adjacent_cells - self.moves_made
 
         self.knowledge.append(
             Sentence(unclicked_adjacent_cells, count))
@@ -240,7 +240,13 @@ class MinesweeperAI():
             return True
 
         # Keep looping until knowledge is updated completely.
+        count = 0; max = 99
         while True:
+            print("count:", count)
+            if count >= max:
+                print(f"looped to maximum of {max} times")
+                break
+            count += 1
             # 4 • If, based on any of the sentences in self.knowledge, new cells can be marked as safe or as mines, then the function should do so.
 
             is_changes_made = update_knowledge(self.knowledge)
@@ -250,25 +256,53 @@ class MinesweeperAI():
                 break
 
         # 5 • If, based on any of the sentences in self.knowledge, new sentences can be inferred (using the subset method described in the Background), then those sentences should be added to the knowledge base as well.
+
+            # detect overlapping sentences, for each coordinate
+            overlaps_per_coord = dict()
+            for coord in itertools.product(range(self.height),range(self.width)):
+                # print(coord)
+                overlaps = []
+                for sentence in self.knowledge:
+                    # print(sentence.cells)
+                    if coord in sentence.cells:
+                        overlaps.append(sentence)
+                if len(overlaps) >= 2:
+                    overlaps_per_coord[coord] = overlaps
+
             # employing subset method with each sentence pair permutation
-            permutations = itertools.permutations(self.knowledge, 2)
+            permutations_per_coord = dict()
+            for coord,overlaps in overlaps_per_coord.items():
+                permutations_per_coord[coord] = itertools.permutations(overlaps, 2)
+
             new_sentences = []
-            for left, right in permutations:
-                if left.cells < right.cells:
-                    new_sentence = Sentence(
-                        right.cells - left.cells,
-                        right.count - left.count
-                    )
-                    new_sentences.append(new_sentence)
+            for coord, permutations in permutations_per_coord.items():
+                print("subset technique for:", coord, end = " ")
+                for j, (left, right) in enumerate(permutations):
+                    print(j, end = " ")
+                    if left.cells < right.cells:
+                        new_sentence = Sentence(
+                            right.cells - left.cells,
+                            right.count - left.count
+                        )
+                        print(new_sentence)
+                        new_sentences.append(new_sentence)
+                print()
                 # left.cells == right.cells can be ignored because the result will be empty set with 0 count
 
             self.knowledge += new_sentences
-            # only new sentences need to be updated
-            is_changes_made = update_knowledge(new_sentences)
+            # only new sentences need to be updated here
+            if len(new_sentences) > 0:
+                print("update knowledge (new sentences)")
+                is_changes_made_2 = update_knowledge(new_sentences)
+            else:
+                is_changes_made_2 = False
+
+            is_changes_made = is_changes_made or is_changes_made_2
 
             # no changes made means loop can stop
             if is_changes_made is False:
                 break
+            
 
     def make_safe_move(self):
         """
@@ -280,7 +314,10 @@ class MinesweeperAI():
         and self.moves_made, but should not modify any of those values.
         """
         possible_set = (self.safes - self.moves_made)
-        return next(iter(possible_set)) if len(possible_set) > 0 else None
+        move = next(iter(possible_set)) if len(possible_set) > 0 else None
+
+        print(move)
+        return move
 
     def make_random_move(self):
         """
@@ -295,4 +332,10 @@ class MinesweeperAI():
             - self.mines
         )
 
-        return random.sample(possible_set, 1)[0]
+        if len(possible_set) == 0:
+            return None
+
+        move = random.sample(possible_set, 1)[0]
+
+        print(move)
+        return move
