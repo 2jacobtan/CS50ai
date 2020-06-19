@@ -162,6 +162,7 @@ class MinesweeperAI():
         to mark that cell as a mine as well.
         """
         self.mines.add(cell)
+        print("*** *** mark mine:", cell)
         for sentence in self.knowledge:
             sentence.mark_mine(cell)
 
@@ -173,6 +174,13 @@ class MinesweeperAI():
         self.safes.add(cell)
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
+
+    def compute_possible_set(self):
+        return (
+            set(itertools.product(range(self.height), range(self.width)))
+            - self.moves_made
+            - self.mines
+        )
 
     def add_knowledge(self, cell, count):
         """
@@ -194,9 +202,7 @@ class MinesweeperAI():
         self.moves_made.add(cell)
 
         # 2 • The function should mark the cell as a safe cell, updating any sentences that contain the cell as well.
-        self.safes.add(cell)
-        for sentence in self.knowledge:
-            sentence.mark_safe(cell)
+        self.mark_safe(cell)
 
         # 3 • The function should add a new sentence to the AI’s knowledge base, based on the value of cell and count, to indicate that count of the cell’s neighbors are mines. Be sure to only include cells whose state is still undetermined in the sentence.
         x, y = cell
@@ -207,17 +213,24 @@ class MinesweeperAI():
             if 0 <= i and i < self.height
             and 0 <= j and j < self.width
         }
-        adjacent_cells -= {cell}  # just to be safe
-        # exclude clicked cells
-        unclicked_adjacent_cells = adjacent_cells - self.moves_made
+        adjacent_cells -= {cell}
+        
+        # exclude known mines
+        valid_adjacent_cells = adjacent_cells - self.mines
+        # deduct (number of known mines excluded) from count!
+        new_count = count - (len(adjacent_cells) - len(valid_adjacent_cells))
 
-        self.knowledge.append(
-            Sentence(unclicked_adjacent_cells, count))
+        # exclude known safes
+        valid_adjacent_cells -= self.safes
+
+        if len(valid_adjacent_cells) > 0:
+            self.knowledge.append(
+                Sentence(valid_adjacent_cells, new_count)) # use new_count!
 
         # "Updating" involves checking each sentence for known mines / safes, and marking them on all sentences.
         def update_knowledge(sentence_list):
-            unmarked_mines = set()
             unmarked_safes = set()
+            unmarked_mines = set()
 
             # accumulate unmarked mines and safes
             for sentence in sentence_list:
@@ -249,55 +262,67 @@ class MinesweeperAI():
         # Keep looping until knowledge is updated completely.
         count = 0
         max = 99
+        print()
         while True:
-            print("count:", count)
+            print("loop count:", count)
             if count >= max:
                 print(f"looped to maximum of {max} times")
                 break
             count += 1
             # 4 • If, based on any of the sentences in self.knowledge, new cells can be marked as safe or as mines, then the function should do so.
 
-            is_changes_made = update_knowledge(self.knowledge)
-
-            # no changes made means loop can stop
-            if is_changes_made is False:
-                break
+            is_changes_made1 = update_knowledge(self.knowledge)
 
         # 5 • If, based on any of the sentences in self.knowledge, new sentences can be inferred (using the subset method described in the Background), then those sentences should be added to the knowledge base as well.
 
-            # detect overlapping sentences, for each coordinate
+            # detect overlapping sentences, for each relevant coordinate
             overlaps_per_coord = dict()
-            for coord in itertools.product(range(self.height), range(self.width)):
+            for coord in self.compute_possible_set():
                 # print(coord)
                 overlaps = []
+                uniques = set()
                 for sentence in self.knowledge:
-                    # print(sentence.cells)
-                    if coord in sentence.cells:
-                        overlaps.append(sentence)
+                    cells = frozenset(sentence.cells)
+                    count = sentence.count
+                    if coord in cells:
+                        if (cells, count) not in uniques:
+                            overlaps.append(sentence)
+                            uniques.add((cells, count))
+                        else:
+                            # remove duplicate sentence
+                            self.knowledge.remove(sentence)
                 if len(overlaps) >= 2:
                     overlaps_per_coord[coord] = overlaps
+            # # debug print
+            # for k,v in overlaps_per_coord.items():
+            #     print(k,v)
 
             # employing subset method with each sentence pair permutation
             permutations_per_coord = dict()
             for coord, overlaps in overlaps_per_coord.items():
                 permutations_per_coord[coord] = itertools.permutations(
                     overlaps, 2)
+            # # debug print
+            # for k,v in permutations_per_coord.items():
+            #     print(k,v)
 
-            # stored as hashable tuples instead of Sentence(), to eliminate uniques
+            # stored as hashable tuples instead of Sentence(), to eliminate duplicates
             new_sentences = set()
 
             for coord, permutations in permutations_per_coord.items():
                 print("subset technique for:", coord, end=" ")
                 for j, (left, right) in enumerate(permutations):
-                    print(j, end=" ")
                     if left.cells < right.cells:
+                        print(f"\n{j}", end=" ")
                         new_sentence_tuple = (  # needs to be hashable
                             frozenset(right.cells - left.cells),
                             right.count - left.count
                         )
-                        print(new_sentence_tuple)
+                        print(new_sentence_tuple, end = " ")
                         new_sentences.add(new_sentence_tuple)
-                print()
+                    else:
+                        print(j, end = " ")
+                print("\n")
                 # left.cells == right.cells can be ignored because the result will be empty set with 0 count
 
             new_sentences = list(map(
@@ -318,11 +343,18 @@ class MinesweeperAI():
             else:
                 is_changes_made_2 = False
 
-            is_changes_made = is_changes_made or is_changes_made_2
+            is_changes_made = is_changes_made1 or is_changes_made_2
 
             # no changes made means loop can stop
             if is_changes_made is False:
                 break
+        print("___knowledge___")
+        for sentence in self.knowledge:
+            print(sentence)
+        print("___mines___")
+        print(self.mines)
+        print("___safe moves___")
+        print(self.safes - self.moves_made)
 
     def make_safe_move(self):
         """
@@ -336,7 +368,9 @@ class MinesweeperAI():
         possible_set = (self.safes - self.moves_made)
         move = next(iter(possible_set)) if len(possible_set) > 0 else None
 
-        print(move)
+        if move is not None:
+            print()
+            print("-->", move)
         return move
 
     def make_random_move(self):
@@ -346,16 +380,14 @@ class MinesweeperAI():
             1) have not already been chosen, and
             2) are not known to be mines
         """
-        possible_set = (
-            set(itertools.product(range(self.height), range(self.width)))
-            - self.moves_made
-            - self.mines
-        )
+        possible_set = self.compute_possible_set()
 
         if len(possible_set) == 0:
             return None
 
         move = random.sample(possible_set, 1)[0]
 
-        print(move)
+        for _ in range(5):
+            print("*")
+        print("??-->", move)
         return move
