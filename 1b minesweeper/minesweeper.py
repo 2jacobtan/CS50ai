@@ -49,7 +49,11 @@ class Minesweeper():
         print("--" * self.width + "-")
 
     def is_mine(self, cell):
-        i, j = cell
+        try:
+            i, j = cell
+        except Exception as ex:
+            print(cell)
+            raise ex
         return self.board[i][j]
 
     def nearby_mines(self, cell):
@@ -186,32 +190,58 @@ class MinesweeperAI():
                if they can be inferred from existing knowledge
         """
 
-        #1 • The function should mark the cell as one of the moves made in the game.
+        # 1 • The function should mark the cell as one of the moves made in the game.
         self.moves_made.add(cell)
-        
-        #2 • The function should mark the cell as a safe cell, updating any sentences that contain the cell as well.
+
+        # 2 • The function should mark the cell as a safe cell, updating any sentences that contain the cell as well.
         self.safes.add(cell)
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
 
-        #3 • The function should add a new sentence to the AI’s knowledge base, based on the value of cell and count, to indicate that count of the cell’s neighbors are mines. Be sure to only include cells whose state is still undetermined in the sentence.
+        # 3 • The function should add a new sentence to the AI’s knowledge base, based on the value of cell and count, to indicate that count of the cell’s neighbors are mines. Be sure to only include cells whose state is still undetermined in the sentence.
         x, y = cell
-        unclicked_adjacent_cells = (
-            {(i, j)
-                for i in range(x-1, x+1+1)
-                for j in range(y-1, y+1+1)
-                if 0 <= i and i < self.height
-             and 0 <= j and j < self.width
-             }.remove((x, y))  # just to be safe
-        ) - self.moves_made  # exclude clicked cells
+        adjacent_cells = {
+            (i, j)
+            for i in range(x-1, x+1+1)
+            for j in range(y-1, y+1+1)
+            if 0 <= i and i < self.height
+            and 0 <= j and j < self.width
+        }
+        adjacent_cells -= {cell}  # just to be safe
+        # exclude clicked cells
+        unclicked_adjacent_cells = adjacent_cells - self.moves_made  
 
         self.knowledge.append(
             Sentence(unclicked_adjacent_cells, count))
 
-        # Keep looping until knowledge is updated completely.
         # "Updating" involves checking each sentence for known mines / safes, and marking them on all sentences.
+        def update_knowledge(sentence_list):
+            unmarked_mines = set()
+            unmarked_safes = set()
+
+            # accumulate unmarked mines and safes
+            for sentence in sentence_list:
+                unmarked_mines |= sentence.known_mines()
+                unmarked_safes |= sentence.known_safes()
+
+            # return the fact that no changes are needed
+            if len(unmarked_mines) + len(unmarked_safes) == 0:
+                return False
+
+            # update knowledge
+            self.mines |= unmarked_mines
+            self.safes |= unmarked_safes
+            for mine in unmarked_mines:
+                self.mark_mine(mine)
+            for safe in unmarked_safes:
+                self.mark_safe(safe)
+
+            # return the fact that changes have been made
+            return True
+
+        # Keep looping until knowledge is updated completely.
         while True:
-        #4 • If, based on any of the sentences in self.knowledge, new cells can be marked as safe or as mines, then the function should do so.
+            # 4 • If, based on any of the sentences in self.knowledge, new cells can be marked as safe or as mines, then the function should do so.
 
             is_changes_made = update_knowledge(self.knowledge)
 
@@ -219,7 +249,7 @@ class MinesweeperAI():
             if is_changes_made is False:
                 break
 
-        #5 • If, based on any of the sentences in self.knowledge, new sentences can be inferred (using the subset method described in the Background), then those sentences should be added to the knowledge base as well.
+        # 5 • If, based on any of the sentences in self.knowledge, new sentences can be inferred (using the subset method described in the Background), then those sentences should be added to the knowledge base as well.
             # employing subset method with each sentence pair permutation
             permutations = itertools.permutations(self.knowledge, 2)
             new_sentences = []
@@ -239,31 +269,6 @@ class MinesweeperAI():
             # no changes made means loop can stop
             if is_changes_made is False:
                 break
-        
-        def update_knowledge(sentence_list):
-            unmarked_mines = []
-            unmarked_safes = []
-
-            # accumulate unmarked mines and safes
-            for sentence in sentence_list:
-                unmarked_mines += sentence.known_mines()
-                unmarked_safes += sentence.known_safes()
-
-            # return the fact that no changes are needed
-            if len(unmarked_mines) + len(unmarked_safes) == 0:
-                return False #
-
-            # update knowledge
-            self.mines += unmarked_mines
-            self.safes += unmarked_safes
-            for mine in unmarked_mines:
-                mark_mine(mine)
-            for safe in unmarked_safes:
-                mark_safe(safe)
-
-            # return the fact that changes have been made
-            return True
-       
 
     def make_safe_move(self):
         """
@@ -274,7 +279,8 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        raise NotImplementedError
+        possible_set = (self.safes - self.moves_made)
+        return next(iter(possible_set)) if len(possible_set) > 0 else None
 
     def make_random_move(self):
         """
@@ -283,4 +289,10 @@ class MinesweeperAI():
             1) have not already been chosen, and
             2) are not known to be mines
         """
-        raise NotImplementedError
+        possible_set = (
+            set(itertools.product(range(self.height), range(self.width)))
+            - self.moves_made
+            - self.mines
+        )
+
+        return random.sample(possible_set, 1)[0]
