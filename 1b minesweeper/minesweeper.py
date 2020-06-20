@@ -175,13 +175,6 @@ class MinesweeperAI():
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
 
-    def compute_possible_set(self):
-        return (
-            set(itertools.product(range(self.height), range(self.width)))
-            - self.moves_made
-            - self.mines
-        )
-
     def compute_knowledge_coords(self):
         return set(itertools.chain.from_iterable(sentence.cells for sentence in self.knowledge))
 
@@ -375,6 +368,13 @@ class MinesweeperAI():
             print()
             print("-->", move)
         return move
+
+    def compute_possible_set(self):
+        return (
+            set(itertools.product(range(self.height), range(self.width)))
+            - self.moves_made
+            - self.mines
+        )
 
     def make_random_move(self):
         """
