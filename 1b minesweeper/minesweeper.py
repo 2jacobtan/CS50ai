@@ -182,12 +182,8 @@ class MinesweeperAI():
             - self.mines
         )
 
-    def compute_indeterminate_set(self):
-        return (
-            set(itertools.product(range(self.height), range(self.width)))
-            - self.safes
-            - self.mines
-        )
+    def compute_knowledge_coords(self):
+        return set(itertools.chain.from_iterable(sentence.cells for sentence in self.knowledge))
 
     def add_knowledge(self, cell, count):
         """
@@ -284,7 +280,7 @@ class MinesweeperAI():
 
             # detect overlapping sentences, for each relevant coordinate
             overlaps_per_coord = dict()
-            for coord in self.compute_indeterminate_set():
+            for coord in self.compute_knowledge_coords():
                 # print(coord)
                 overlaps = []
                 uniques = set()
