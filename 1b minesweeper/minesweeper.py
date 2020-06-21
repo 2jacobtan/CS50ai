@@ -230,18 +230,22 @@ class MinesweeperAI():
 
             # accumulate unmarked mines and safes
             for sentence in sentence_list:
+                sentence_size = len(sentence.cells)
+                if sentence_size == 0:
+                    self.knowledge.remove(sentence)
+                    continue
                 known_safes = sentence.known_safes()
                 if len(known_safes) > 0:
                     unmarked_safes |= known_safes
                     self.knowledge.remove(sentence)
-                    pass
+                    continue
                 known_mines = sentence.known_mines()
                 if len(known_mines) > 0:
                     unmarked_mines |= known_mines
                     self.knowledge.remove(sentence)
 
             # return the fact that no changes are needed
-            if len(unmarked_mines) + len(unmarked_safes) == 0:
+            if len(unmarked_mines) == 0 and len(unmarked_safes) == 0:
                 return False
 
             # update knowledge
