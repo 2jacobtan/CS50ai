@@ -229,12 +229,8 @@ def normalize(probabilities):
         # dist is a dictionary
         values_sum = sum(dist.values())
 
-        if values_sum == 0:
-            for item in dist:
-                dist[item] = 1 / len(dist)
-        else:
-            for item in dist:
-                dist[item] /= values_sum
+        for item in dist:
+            dist[item] /= values_sum
 
     for me, my_probs in probabilities.items():
         gene_dist = my_probs["gene"]
