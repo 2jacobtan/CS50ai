@@ -168,13 +168,13 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         # early return if no parent data
         if mother is None:
             assert father is None
-            return_value = PROBS["gene"][n_genes] * PROBS["trait"][n_genes][person in have_trait]
+            return_value = PROBS["gene"][n_genes] * \
+                PROBS["trait"][n_genes][person in have_trait]
             # print(person, return_value)
             return return_value
 
         p_from_mom = p_gene_from_parent(mother)
         p_from_dad = p_gene_from_parent(father)
-
 
         gene_probability = (
             p_from_mom * p_from_dad
@@ -228,6 +228,7 @@ def normalize(probabilities):
     def normalize_update(dist):
         # dist is a dictionary
         values_sum = sum(dist.values())
+
         if values_sum == 0:
             for item in dist:
                 dist[item] = 1 / len(dist)
