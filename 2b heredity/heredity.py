@@ -163,13 +163,13 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         mother = people[person]["mother"]
         father = people[person]["father"]
         n_genes = num_genes(person)
-        print(person, n_genes, "genes")
+        # print(person, n_genes, "genes")
 
         # early return if no parent data
         if mother is None:
             assert father is None
             return_value = PROBS["gene"][n_genes] * PROBS["trait"][n_genes][person in have_trait]
-            print(person, return_value)
+            # print(person, return_value)
             return return_value
 
         p_from_mom = p_gene_from_parent(mother)
@@ -188,7 +188,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
             PROBS["trait"][n_genes][person in have_trait]
         )
 
-        print(person, gene_probability, "*", trait_probability, "=", gene_probability * trait_probability)
+        # print(person, gene_probability, "*", trait_probability, "=", gene_probability * trait_probability)
         return gene_probability * trait_probability
 
     return reduce(
@@ -207,7 +207,17 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
     Which value for each distribution is updated depends on whether
     the person is in `have_gene` and `have_trait`, respectively.
     """
-    raise NotImplementedError
+    for me, my_probs in probabilities.items():
+        gene_num = (
+            1 if me in one_gene else
+            2 if me in two_genes else
+            0
+        )
+        # update gene
+        my_probs["gene"][gene_num] += p
+
+        # update trait
+        my_probs["trait"][me in have_trait] += p
 
 
 def normalize(probabilities):
@@ -215,7 +225,21 @@ def normalize(probabilities):
     Update `probabilities` such that each probability distribution
     is normalized (i.e., sums to 1, with relative proportions the same).
     """
-    raise NotImplementedError
+    def normalize_update(dist):
+        # dist is a dictionary
+        values_sum = sum(dist.values())
+        if values_sum == 0:
+            for item in dist:
+                dist[item] = 1 / len(dist)
+        else:
+            for item in dist:
+                dist[item] /= values_sum
+
+    for me, my_probs in probabilities.items():
+        gene_dist = my_probs["gene"]
+        normalize_update(gene_dist)
+        trait_dist = my_probs["trait"]
+        normalize_update(trait_dist)
 
 
 if __name__ == "__main__":
