@@ -1,6 +1,8 @@
 import csv
 import itertools
 import sys
+from functools import reduce
+import operator
 
 PROBS = {
 
@@ -139,7 +141,63 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
-    raise NotImplementedError
+    def individual_probability(person):
+        def num_genes(pers):  # ::person -> number of genes
+            return (
+                2 if pers in two_genes else
+                1 if pers in one_gene else
+                0
+            )
+
+        def p_gene_from_parent(parent):  # ::parent -> P(get gene from parent)
+            n = num_genes(parent)
+            p_mut = PROBS["mutation"]
+            return (
+                1 - p_mut if n == 2 else
+                0.5 * (1 - p_mut) + 0.5 * p_mut if n == 1 else
+                p_mut
+            )
+
+        def Not(p): return 1 - p
+
+        mother = people[person]["mother"]
+        father = people[person]["father"]
+        n_genes = num_genes(person)
+        print(person, n_genes, "genes")
+
+        # early return if no parent data
+        if mother is None:
+            assert father is None
+            return_value = PROBS["gene"][n_genes] * PROBS["trait"][n_genes][person in have_trait]
+            print(person, return_value)
+            return return_value
+
+        p_from_mom = p_gene_from_parent(mother)
+        p_from_dad = p_gene_from_parent(father)
+
+
+        gene_probability = (
+            p_from_mom * p_from_dad
+            if n_genes == 2 else
+            Not(p_from_mom) * p_from_dad + p_from_mom * Not(p_from_dad)
+            if n_genes == 1 else
+            Not(p_from_mom) * Not(p_from_dad)
+        )
+
+        trait_probability = (
+            PROBS["trait"][n_genes][person in have_trait]
+        )
+
+        print(person, gene_probability, "*", trait_probability, "=", gene_probability * trait_probability)
+        return gene_probability * trait_probability
+
+    return reduce(
+        operator.mul,  # multiply each individual probability
+        map(
+            individual_probability,  # compute individual probabily
+            people
+        )
+    )
 
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
