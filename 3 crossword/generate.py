@@ -257,6 +257,7 @@ class CrosswordCreator():
                     )
                 for (v1, v2), (i1, i2) in overlaps.items()
             )
+            return size_of_elimination
 
         return list(sorted(self.domains[var], key=sort_by))
 
