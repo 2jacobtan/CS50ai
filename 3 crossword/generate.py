@@ -102,7 +102,8 @@ class CrosswordCreator():
          constraints; in this case, the length of the word.)
         """
         for variable, domain in self.domains.items():
-            domain = {word for word in domain if len(word) == variable.length}
+            self.domains[variable] = {
+                word for word in domain if len(word) == variable.length}
 
     def revise(self, x, y):
         """
@@ -169,7 +170,7 @@ class CrosswordCreator():
 
         while arc_set:
             x, y = pop()
-            if revise(x, y):
+            if self.revise(x, y):
                 if not self.domains[x]:
                     return False
                 extend(
@@ -206,9 +207,9 @@ class CrosswordCreator():
             assignment.items()
         ))):
             return False
-        
+
         pairs = itertools.combinations(assignment)
-        
+
         overlaps = {
             key: val
             for key, val in self.crossword.overlaps.items()
@@ -217,7 +218,7 @@ class CrosswordCreator():
         }
 
         # no conflict with neighbors
-        for (v1, v2), (i1,i2) in overlaps:
+        for (v1, v2), (i1, i2) in overlaps:
             if assignment[v1][i1] != assignment[v2][i2]:
                 return False
 
@@ -238,25 +239,25 @@ class CrosswordCreator():
         #     and val is not None
         # }
         overlaps = {
-            (var,v2): self.crossword.overlaps[var,v2]
+            (var, v2): self.crossword.overlaps[var, v2]
             for v2 in self.crossword.variables - {var}
             if v2 not in assignment
-            and self.crossword.overlaps[var,v2]
+            and self.crossword.overlaps[var, v2]
         }
 
         size_before_elimination = sum(
-            len(self.domains[v2]) for (v1,v2) in overlaps
+            len(self.domains[v2]) for (v1, v2) in overlaps
         )
-        
+
         def sort_by(val):
             size_of_elimination = sum(
                 sum(1 for word in self.domains[v2]
                     if word[i2] != val[i1]
-                )
-                for (v1,v2), (i1,i2) in overlaps.items()
+                    )
+                for (v1, v2), (i1, i2) in overlaps.items()
             )
 
-        return list(sorted(self.domains[var],Key=sort_by))
+        return list(sorted(self.domains[var], Key=sort_by))
 
     def select_unassigned_variable(self, assignment):
         """
@@ -283,10 +284,9 @@ class CrosswordCreator():
             return variables1[0]
 
         # highest degree
-        return max(variables1, key=
-            lambda var: sum(
-                1 for (v1,v2), _ in self.crossword.overlaps.items()
-                if v1 == var and _ is not None))
+        return max(variables1, key=lambda var: sum(
+            1 for (v1, v2), _ in self.crossword.overlaps.items()
+            if v1 == var and _ is not None))
 
     def backtrack(self, assignment):
         """
@@ -309,7 +309,7 @@ class CrosswordCreator():
                 if result:
                     return result
             del assignment[var]
-        
+
         return None
 
 
