@@ -163,7 +163,7 @@ class CrosswordCreator():
             arc_set.remove(arc)
             return arc
 
-        def extend(new_arcs):  # ::set -> ()
+        def extend(new_arcs, arc_set):  # ::set -> ()
             new_arcs -= arc_set  # exclude duplicate arcs
             arc_queue.extend(new_arcs)  # add new arcs to queue
             arc_set |= new_arcs  # add new arcs to set
@@ -177,7 +177,8 @@ class CrosswordCreator():
                     set(filter(
                         lambda arc: arc[1] == x,
                         arcs
-                    )).remove((y, x))
+                    )) - {(y, x)},
+                    arc_set
                 )
 
         return True
@@ -267,12 +268,12 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        variables0 = self.crossword.variables - assignment
+        variables0 = self.crossword.variables - set(assignment)
 
         # minimum number of remaining values
-        min_ = len(self.domains[variables0[0]])
-        variables1 = []
-        for var in variables0[1:]:
+        variables1 = [variables0.pop()]
+        min_ = len(self.domains[variables1[0]])
+        for var in variables0:
             length = len(self.domains[var])
             if length < min_:
                 min_ = length
