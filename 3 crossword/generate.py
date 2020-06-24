@@ -306,7 +306,7 @@ class CrosswordCreator():
         for value in self.order_domain_values(var, assignment):
             assignment[var] = value
             if self.consistent(assignment):
-                result = backtrack(assignment)
+                result = self.backtrack(assignment)
                 if result:
                     return result
             del assignment[var]
