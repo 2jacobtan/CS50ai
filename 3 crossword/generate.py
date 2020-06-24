@@ -219,7 +219,7 @@ class CrosswordCreator():
         }
 
         # no conflict with neighbors
-        for (v1, v2), (i1, i2) in overlaps:
+        for (v1, v2), (i1, i2) in overlaps.items():
             if assignment[v1][i1] != assignment[v2][i2]:
                 return False
 
