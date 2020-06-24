@@ -204,12 +204,12 @@ class CrosswordCreator():
 
         # correct length
         if not (all(map(
-            lambda var, value: var.length == len(value),
+            lambda var_value: var_value[0].length == len(var_value[1]),
             assignment.items()
         ))):
             return False
 
-        pairs = itertools.combinations(assignment)
+        pairs = itertools.combinations(assignment,2)
 
         overlaps = {
             key: val
@@ -258,7 +258,7 @@ class CrosswordCreator():
                 for (v1, v2), (i1, i2) in overlaps.items()
             )
 
-        return list(sorted(self.domains[var], Key=sort_by))
+        return list(sorted(self.domains[var], key=sort_by))
 
     def select_unassigned_variable(self, assignment):
         """
