@@ -209,7 +209,7 @@ class CrosswordCreator():
         ))):
             return False
 
-        pairs = itertools.combinations(assignment,2)
+        pairs = set(itertools.combinations(assignment, 2))
 
         overlaps = {
             key: val
