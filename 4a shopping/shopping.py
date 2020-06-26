@@ -70,6 +70,10 @@ def load_data(filename):
 
     bool_fields = set(("Weekend","Revenue"))
 
+    sets = [int_fields, float_fields, bool_fields]
+    # ensure that sets are pairwise disjoint
+    assert len(set.union(*sets)) == sum(map(len, sets))
+
     month_names = "Jan Feb Mar Apr May June Jul Aug Sep Oct Nov Dec".split()
     month_mappings = dict(zip(month_names, range(12)))
 
