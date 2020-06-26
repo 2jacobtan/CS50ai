@@ -4,6 +4,8 @@ import sys
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 
+from itertools import starmap
+
 TEST_SIZE = 0.4
 
 
@@ -59,8 +61,68 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
 
+    int_fields = set(
+        "Administrative, Informational, ProductRelated, OperatingSystems, Browser, Region, TrafficType".split(", "))
+
+    float_fields = set(
+        "Administrative_Duration, Informational_Duration, ProductRelated_Duration, BounceRates, ExitRates, PageValues, SpecialDay".split(", "))
+
+    bool_fields = set(("Weekend","Revenue"))
+
+    month_names = "Jan Feb Mar Apr May June Jul Aug Sep Oct Nov Dec".split()
+    month_mappings = dict(zip(month_names, range(12)))
+
+    def month_transform(month):
+        return month_mappings[month]
+
+    def visitor_transform(visitor):
+        return 1 if visitor == "Returning_Visitor" else 0
+
+    def bool_transform(bool_string):
+        if bool_string == "FALSE":
+            return 0
+        if bool_string == "TRUE":
+            return 1
+        raise Exception(f"Invalid value {repr(bool_string)} for bool_string.")
+
+    def invalid_transform(_):
+        raise Exception(f"Field name {repr(_)} is not handled.")
+
+    def field_transforms(field_names):
+        return list(map(
+            lambda field:
+                int if field in int_fields else
+                float if field in float_fields else
+                month_transform if field == "Month" else
+                visitor_transform if field == "VisitorType" else
+                bool_transform if field in bool_fields else
+                invalid_transform,
+            field_names))
+
+    evidence = []
+    labels = []
+
+    with open("shopping.csv", newline='') as csvfile:
+        reader = csv.reader(csvfile)
+
+        field_names = next(reader)
+        field_transforms_ = field_transforms(field_names)
+
+        # # debug
+        # for _ in zip(field_names,field_transforms_):
+        #     print(_)
+
+        for row in reader:
+            transformed_row = list(starmap(
+                lambda field, transform: transform(field),
+                zip(row, field_transforms_)
+            ))
+
+            evidence.append(transformed_row[:-1])
+            labels.append(transformed_row[-1])
+
+    return evidence, labels
 
 def train_model(evidence, labels):
     """
