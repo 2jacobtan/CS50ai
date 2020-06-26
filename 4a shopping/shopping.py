@@ -68,10 +68,10 @@ def load_data(filename):
     float_fields = set(
         "Administrative_Duration, Informational_Duration, ProductRelated_Duration, BounceRates, ExitRates, PageValues, SpecialDay".split(", "))
 
-    bool_fields = set(("Weekend","Revenue"))
+    bool_fields = set(("Weekend", "Revenue"))
 
-    sets = [int_fields, float_fields, bool_fields]
     # ensure that sets are pairwise disjoint
+    sets = [int_fields, float_fields, bool_fields]
     assert len(set.union(*sets)) == sum(map(len, sets))
 
     month_names = "Jan Feb Mar Apr May June Jul Aug Sep Oct Nov Dec".split()
@@ -127,6 +127,7 @@ def load_data(filename):
             labels.append(transformed_row[-1])
 
     return evidence, labels
+
 
 def train_model(evidence, labels):
     """
