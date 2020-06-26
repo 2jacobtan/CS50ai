@@ -109,8 +109,8 @@ def load_data(filename):
     with open("shopping.csv", newline='') as csvfile:
         reader = csv.reader(csvfile)
 
-        field_names = next(reader) # extract field names from first row
-        
+        field_names = next(reader)  # extract field names from first row
+
         # list of transformation needed for each field
         field_transforms_ = field_transforms(field_names)
 
