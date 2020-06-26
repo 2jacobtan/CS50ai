@@ -91,6 +91,7 @@ def load_data(filename):
     def invalid_transform(_):
         raise Exception(f"Field name {repr(_)} is not handled.")
 
+    # To produce list of transformation needed for each field
     def field_transforms(field_names):
         return list(map(
             lambda field:
@@ -108,7 +109,9 @@ def load_data(filename):
     with open("shopping.csv", newline='') as csvfile:
         reader = csv.reader(csvfile)
 
-        field_names = next(reader)
+        field_names = next(reader) # extract field names from first row
+        
+        # list of transformation needed for each field
         field_transforms_ = field_transforms(field_names)
 
         # # debug
