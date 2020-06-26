@@ -4,8 +4,6 @@ import sys
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 
-from itertools import starmap
-
 TEST_SIZE = 0.4
 
 
@@ -118,9 +116,10 @@ def load_data(filename):
         #     print(_)
 
         for row in reader:
-            transformed_row = list(starmap(
+            transformed_row = list(map(
                 lambda field, transform: transform(field),
-                zip(row, field_transforms_)
+                row,
+                field_transforms_
             ))
 
             evidence.append(transformed_row[:-1])
