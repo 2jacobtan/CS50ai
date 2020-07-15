@@ -1,6 +1,7 @@
 import nltk
 import sys
 import re
+import itertools
 
 TERMINALS = """
 Adj -> "country" | "dreadful" | "enigmatical" | "little" | "moist" | "red"
@@ -18,7 +19,7 @@ V -> "smiled" | "tell" | "were"
 NONTERMINALS = """
 S -> NP VP | S Conj S | S Conj VP
 AdjP -> N | Adj AdjP
-NP -> AdjP | Det NP | NP P NP
+NP -> AdjP | Det AdjP | NP P NP
 VP -> V | Adv VP | VP Adv | VP NP | VP P NP
 """
 
@@ -79,7 +80,23 @@ def np_chunk(tree):
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    return []
+    def isChunk(node):
+        return (node.label() == "NP" and
+            not any(map(
+                lambda x: isinstance(x, nltk.Tree) and x.label() == "NP",
+                node
+        )))
+
+    def chunks(tree):
+        if not isinstance(tree, nltk.Tree):
+            return [None]
+        if isChunk(tree):
+            return [tree]
+        return itertools.chain.from_iterable(
+            map(chunks, tree)
+        )
+
+    return list(filter(None, chunks(tree)))
 
 
 if __name__ == "__main__":
